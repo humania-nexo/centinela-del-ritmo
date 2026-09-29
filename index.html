@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>EL CENTINELA DEL RITMO — Universo Proiectio (Capítulo 22)</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Contenedor Principal de la Terminal Táctica -->
+  <main class="terminal-wrapper" id="terminal-main">
+    
+    <!-- Cabecera de la Terminal -->
+    <header class="terminal-header">
+      <div class="header-left">
+        <span class="header-title">TERM_ORION // CLOTO_CAP_22</span>
+        <span class="header-badge">COLISEO_VIRTUALE</span>
+      </div>
+      <div class="header-right">
+        <span class="status-dot"></span>
+        <span style="font-size: 10px; color: #00ffaa;">ENLACE ACTIVO</span>
+      </div>
+    </header>
+
+    <!-- ========================================== -->
+    <!-- PANTALLA 1: CONEXIÓN & LORE DEL CAPÍTULO 22 -->
+    <!-- ========================================== -->
+    <section class="screen-view active" id="step-intro">
+      <div class="story-header">
+        <h1 class="glitch-title">EL CENTINELA DEL RITMO</h1>
+        <div class="chapter-tag">LIBRO 1: CLOTO &bull; CAPÍTULO 22</div>
+      </div>
+
+      <div class="story-box">
+        <p>
+          <span class="highlight-cyan">&gt;</span> <span class="highlight-gold">Orion</span> y la IA <span class="highlight-cyan">Mite</span> han alcanzado el núcleo del <strong>Coliseo Virtual</strong> en Neon Nirvana. Frente a ellos se alza el impenetrable <strong>Cortafuegos Cinético</strong>.
+        </p>
+        <p>
+          <span class="highlight-cyan">&gt;</span> El sector está custodiado por el <span class="highlight-pink">Centinela de la Frecuencia</span>: una entidad colosal de luz sólida capaz de predecir y anular en nanosegundos cualquier trayectoria balística convencional o disparo de rifle.
+        </p>
+        <p>
+          <span class="highlight-cyan">&gt;</span> Para romper el algoritmo predictivo, no se necesita fuerza militar. Se necesita la única variable que la inteligencia artificial no puede predecir: <em>el flow humano, la síncopa y el caos armónico de 1996</em>.
+        </p>
+      </div>
+
+      <div class="btn-action-container">
+        <button class="terminal-btn" id="btn-to-briefing">[ SINTONIZAR TRANSMISIÓN CON MITE ]</button>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- PANTALLA 2: BRIEFING TÁCTICO CON MITE     -->
+    <!-- ========================================== -->
+    <section class="screen-view" id="step-briefing">
+      <div class="story-header">
+        <h1 class="glitch-title">ALIANZA SÓNICA CON MITE</h1>
+        <div class="chapter-tag">PROTOCOLO DE GRABACIÓN «● REC»</div>
+      </div>
+
+      <div class="dialog-card">
+        <div class="avatar-container">
+          <div class="avatar-holo">
+            <img src="assets/mite_real.png" alt="Mite IA" class="mite-img-holo">
+            <div class="holo-ring"></div>
+          </div>
+        </div>
+        <div class="dialog-bubble">
+          <div class="dialog-speaker">MITE_CORE.EXE // TRANSMISIÓN HOLOGRÁFICA:</div>
+          <p class="dialog-text">
+            "¡Orion! El Centinela tiene sus procesadores afinados para calcular balística lineal, pero no tiene ni un solo byte de datos sobre el funk noventero. Si ejecutamos la cadencia exacta de <em>«Get Down» a 116 BPM</em>, sus sensores de resonancia van a entrar en sobrecarga crítica."
+          </p>
+          <p class="dialog-text" style="margin-top: 8px;">
+            "Yo desplegaré mi cámara holográfica para grabar tus pasos (<span class="highlight-pink">«● REC»</span>). En cuanto juntemos suficiente flow, transmitiré la secuencia al Coliseo para abrir el Cortafuegos. ¡Pisa las flechas justo en los receptores y no pierdas el ritmo!"
+          </p>
+        </div>
+      </div>
+
+      <div class="btn-action-container">
+        <button class="terminal-btn pink-btn" id="btn-start-game">[ ENTRAR A LA PISTA DE BAILE ]</button>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- PANTALLA 3: EL MINIJUEGO INTERACTIVO (CANVAS)-->
+    <!-- ========================================== -->
+    <section class="screen-view" id="step-game">
+      <div id="game-viewport">
+        <canvas id="gameCanvas" width="384" height="216"></canvas>
+        <div class="scanlines"></div>
+        <div class="crt-glow"></div>
+
+        <!-- CAPA DE HUD VECTORIAL EN ALTA DEFINICIÓN (100% NÍTIDA) -->
+        <div id="hud-overlay">
+          <!-- Barra Superior: Flow Meter, Score, Compás y Boss HP -->
+          <div id="hud-top-bar">
+            <div class="hud-stat-box flow-box">
+              <span class="hud-stat-label">FLOW</span>
+              <div class="hud-meter-track">
+                <div id="hud-flow-fill" class="hud-meter-fill"></div>
+              </div>
+              <span id="hud-flow-val" class="hud-stat-val">20%</span>
+            </div>
+
+            <div id="hud-score-box" class="hud-stat-box score-box">
+              <span id="hud-score-val" class="highlight-cyan">SCORE: 0</span>
+              <span class="hud-sep">&bull;</span>
+              <span id="hud-combo-val" class="highlight-gold">COMBO: x0</span>
+              <span class="hud-sep">&bull;</span>
+              <span id="hud-bar-val">COMPÁS: 0/16</span>
+            </div>
+
+            <div id="hud-boss-box" class="hud-stat-box boss-box" style="display: none;">
+              <span class="hud-stat-label">CENTINELA</span>
+              <div class="hud-meter-track red-track">
+                <div id="hud-boss-fill" class="hud-meter-fill red-fill"></div>
+              </div>
+              <span id="hud-boss-val" class="hud-stat-val red-val">100%</span>
+            </div>
+          </div>
+
+          <!-- Contenedor de Popups Flotantes de Precisión -->
+          <div id="hud-popup-container"></div>
+
+          <!-- Banner Dinámico de Diálogos Narrativos (Transmedia) -->
+          <div id="hud-dialogue-banner" style="display: none;">
+            <span id="hud-speaker-badge" class="speaker-mite">MITE:</span>
+            <span id="hud-dialogue-content">¡Cámara activada! ¡Muévete al ritmo!</span>
+          </div>
+
+          <!-- Tarjeta Flotante de Victoria y Score Final -->
+          <div id="hud-victory-card" style="display: none;">
+            <div class="vic-title">★ VICTORIA: FRECUENCIA DEL COLISEO SECUESTRADA ★</div>
+            <div class="vic-stats">
+              <span id="vic-score-val" class="highlight-cyan">SCORE: 0 PTS</span>
+              <span class="vic-sep">|</span>
+              <span id="vic-combo-val" class="highlight-gold">MAX COMBO: x0</span>
+              <span class="vic-sep">|</span>
+              <span id="vic-rank-val" class="rank-s">RANGO S: ¡FLOW CARÍSIMO!</span>
+            </div>
+            <div class="vic-subtitle">EL HIPER-LAZO DE PANDORA HA SIDO INSTALADO CON ÉXITO.</div>
+            <button id="vic-btn-continue" class="vic-btn">[ CONTINUAR AL EPÍLOGO CANÓNICO ]</button>
+          </div>
+
+          <!-- Modal de Replay / Falla del Tutorial -->
+          <div id="hud-phase-modal" style="display: none;">
+            <div id="hud-modal-title" class="modal-title"></div>
+            <div id="hud-modal-desc" class="modal-desc"></div>
+            <button id="hud-modal-btn" class="terminal-btn"></button>
+          </div>
+        </div>
+      </div>
+
+      <div id="controls-hint">
+        [PC]: <span>FLECHAS / WASD</span> = PASOS &bull; <span>ESPACIO</span> = BEAT DROP &bull; [MÓVIL]: TOCA LOS RECEPTORES EN PANTALLA
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- PANTALLA 4: EPÍLOGO & RESOLUCIÓN CANÓNICA  -->
+    <!-- ========================================== -->
+    <section class="screen-view" id="step-victory">
+      <div class="story-header">
+        <h1 class="glitch-title" style="color: #ffcc00;">¡FRECUENCIA SECUESTRADA!</h1>
+        <div class="chapter-tag">VICTORIA EN EL COLISEO &bull; NODO LIBERADO</div>
+      </div>
+
+      <div class="story-box">
+        <p>
+          <span class="highlight-green">&gt;</span> El <span class="highlight-pink">Centinela de la Frecuencia</span> ha colapsado ante la sobrecarga de síncopa funk. Los núcleos de luz sólida se disuelven en chispas de datos.
+        </p>
+        <p>
+          <span class="highlight-cyan">&gt;</span> La grabación de <span class="highlight-gold">«El Bytestreet Boy de la Resistencia»</span> resuena en las pantallas monumentales de Neon Nirvana. Millones de usuarios conectados a la Red ANIMA vitorean la hazaña.
+        </p>
+        <p>
+          <span class="highlight-gold">&gt;</span> Mite ha instalado con éxito el <strong>Hiper-Lazo de Pandora</strong>. La frecuencia de la rebelión está asegurada para el siguiente paso del viaje.
+        </p>
+      </div>
+
+      <div class="btn-action-container" style="flex-wrap: wrap; gap: 14px;">
+        <button class="terminal-btn" id="btn-restart-game">[ VOLVER A JUGAR ]</button>
+        <a href="https://www.youtube.com/watch?v=0LSYuZRSGcY&list=RD0LSYuZRSGcY&start_radio=1" target="_blank" rel="noopener noreferrer" class="terminal-btn pink-btn" id="btn-bsb-tribute" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
+          [ VER HOMENAJE: BACKSTREET BOYS (VIDEO ORIGINAL) ]
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="audio.js"></script>
+  <script src="engine.js"></script>
+  <script>
+    // Conexión de Pantallas de Terminal con el Motor
+    const stepIntro = document.getElementById('step-intro');
+    const stepBriefing = document.getElementById('step-briefing');
+    const stepGame = document.getElementById('step-game');
+    const stepVictory = document.getElementById('step-victory');
+
+    const btnToBriefing = document.getElementById('btn-to-briefing');
+    const btnStartGame = document.getElementById('btn-start-game');
+    const btnRestartGame = document.getElementById('btn-restart-game');
+
+    function showStep(stepElement) {
+      document.querySelectorAll('.screen-view').forEach(s => s.classList.remove('active'));
+      stepElement.classList.add('active');
+    }
+
+    btnToBriefing.addEventListener('click', () => {
+      showStep(stepBriefing);
+    });
+
+    btnStartGame.addEventListener('click', () => {
+      showStep(stepGame);
+      if (window.gameEngine) {
+        window.gameEngine.startPhase1Tutorial();
+      }
+    });
+
+    btnRestartGame.addEventListener('click', () => {
+      showStep(stepIntro);
+    });
+
+    // Escuchar evento de victoria del motor
+    window.addEventListener('game-victory', () => {
+      showStep(stepVictory);
+    });
+  </script>
+</body>
+</html>
