@@ -87,6 +87,21 @@
     <!-- PANTALLA 3: EL MINIJUEGO INTERACTIVO (CANVAS)-->
     <!-- ========================================== -->
     <section class="screen-view" id="step-game">
+      
+      <!-- MONITOR DE TRANSMISIÓN TÁCTICA EXTERIOR (100% FUERA DEL CANVAS) -->
+      <div id="external-dialogue-bar">
+        <div class="comms-header">
+          <div class="comms-tag">
+            <span class="comms-live-dot"></span>
+            <span id="hud-speaker-badge" class="speaker-mite">MITE // TRANSMISIÓN</span>
+          </div>
+          <span class="comms-freq">ENLACE ANIMA &bull; 116 BPM</span>
+        </div>
+        <div id="hud-dialogue-content" class="comms-body">
+          ¡Cámara "● REC" activada! ¡Muévete al compás de las flechas!
+        </div>
+      </div>
+
       <div id="game-viewport">
         <canvas id="gameCanvas" width="384" height="216"></canvas>
         <div class="scanlines"></div>
@@ -123,12 +138,6 @@
 
           <!-- Contenedor de Popups Flotantes de Precisión -->
           <div id="hud-popup-container"></div>
-
-          <!-- Banner Dinámico de Diálogos Narrativos (Transmedia - Compacto Superior) -->
-          <div id="hud-dialogue-banner" style="display: none;">
-            <span id="hud-speaker-badge" class="speaker-mite">MITE:</span>
-            <span id="hud-dialogue-content">¡Cámara activada! ¡Muévete al ritmo!</span>
-          </div>
 
           <!-- Overlay de Cuenta Regresiva 3, 2, 1, ¡FLOW! -->
           <div id="hud-countdown-overlay" style="display: none;">

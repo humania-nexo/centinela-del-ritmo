@@ -855,15 +855,18 @@ class GameEngine {
       }
     }
 
-    // Diálogos Narrativos Dinámicos
-    if (dialogueBanner && speakerBadge && dialogueContent) {
+    // Diálogos Narrativos Dinámicos (Monitor Exterior de Transmisión)
+    const speakerBadge = document.getElementById('hud-speaker-badge');
+    const dialogueContent = document.getElementById('hud-dialogue-content');
+    if (speakerBadge && dialogueContent) {
       if (this.dialogueTimer > 0) {
-        dialogueBanner.style.display = 'flex';
-        speakerBadge.textContent = `${this.dialogueSpeaker}:`;
+        speakerBadge.textContent = `${this.dialogueSpeaker} // TRANSMISIÓN`;
         speakerBadge.className = this.dialogueSpeaker === 'ORION' ? 'speaker-orion' : (this.dialogueSpeaker === 'MITE' ? 'speaker-mite' : 'speaker-centinela');
         dialogueContent.textContent = this.dialogueText;
       } else {
-        dialogueBanner.style.display = 'none';
+        speakerBadge.textContent = 'MITE // FRECUENCIA';
+        speakerBadge.className = 'speaker-mite';
+        dialogueContent.textContent = 'Sincronización activa a 116 BPM. ¡Pisa las flechas en el receptor!';
       }
     }
 
