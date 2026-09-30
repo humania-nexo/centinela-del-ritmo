@@ -353,7 +353,7 @@ class GameEngine {
   startCountdown(targetPhase) {
     this.targetAfterCountdown = targetPhase;
     this.phase = (targetPhase === GAME_PHASES.PHASE_1_TUTORIAL) ? GAME_PHASES.COUNTDOWN_TUTORIAL : GAME_PHASES.COUNTDOWN_BOSS;
-    this.countdownTimer = 3.6; // 3.6s: 3.6->2.7 (3), 2.7->1.8 (2), 1.8->0.9 (1), 0.9->0.0 (¡FLOW!)
+    this.countdownTimer = 2.4; // 2.4s: 2.4->1.8 (3), 1.8->1.2 (2), 1.2->0.6 (1), 0.6->0.0 (¡FLOW!)
     this.lastCountdownBeat = 4;
     this.audio.ensureContext();
     this.audio.stopMusic();
@@ -381,7 +381,7 @@ class GameEngine {
       if (box) {
         box.style.animation = 'none';
         void box.offsetWidth;
-        box.style.animation = 'countdown-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        box.style.animation = 'countdown-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
       }
     }
     if (subEl && subtitle) subEl.textContent = subtitle;
@@ -396,51 +396,100 @@ class GameEngine {
   }
 
   actuallyStartTutorial() {
-    this.phase = GAME_PHASES.PHASE_1_TUTORIAL;
-    this.audio.mode = 'TUTORIAL';
-    this.audio.stopMusic();
-    this.audio.startMusic();
-    this.songStartTime = this.audio.ctx.currentTime + 0.05;
-    this.barCount = 0;
-    this.totalBarsInPhase = 16;
-    this.orionHP = 100;
-    this.bossHP = 100;
-    this.flowMeter = 20;
-    this.score = 0;
-    this.combo = 0;
-    this.maxCombo = 0;
-    this.storyFlags = {};
-    this.victoryTimer = 0;
-    this.bossDestroyed = false;
-    this.generateTutorialNotesStream(16);
-    this.mitePose = MITE_EXT_FRAMES.HOLOGRAM_RECORD;
-    this.setDialogue('MITE', '¡Cámara "● REC" activada! ¡Muévete al compás de las flechas!', 3.0);
-
-    const countdownOverlay = document.getElementById('hud-countdown-overlay');
-    if (countdownOverlay) countdownOverlay.style.display = 'none';
+    try {
+      this.phase = GAME_PHASES.PHASE_1_TUTORIAL;
+      this.audio.mode = 'TUTORIAL';
+      this.audio.stopMusic();
+      this.audio.startMusic();
+      this.songStartTime = (this.audio.ctx && this.audio.ctx.currentTime > 0) ? (this.audio.ctx.currentTime + 0.05) : (performance.now() / 1000);
+      this.gameSongTime = 0;
+      this.barCount = 0;
+      this.totalBarsInPhase = 16;
+      this.orionHP = 100;
+      this.bossHP = 100;
+      this.flowMeter = 20;
+      this.score = 0;
+      this.combo = 0;
+      this.maxCombo = 0;
+      this.storyFlags = {};
+      this.victoryTimer = 0;
+      this.bossDestroyed = false;
+      this.generateTutorialNotesStream(16);
+      this.mitePose = MITE_EXT_FRAMES.HOLOGRAM_RECORD;
+      this.setDialogue('MITE', '¡Cámara "● REC" activada! ¡Muévete al compás de las flechas!', 3.0);
+    } catch (err) {
+      console.error('Error al iniciar tutorial:', err);
+    } finally {
+      const countdownOverlay = document.getElementById('hud-countdown-overlay');
+      if (countdownOverlay) countdownOverlay.style.display = 'none';
+    }
   }
 
   actuallyStartBoss() {
-    this.phase = GAME_PHASES.PHASE_2_DUEL;
-    this.audio.mode = 'BOSS_DUEL';
-    this.audio.stopMusic();
-    this.audio.startMusic();
-    this.songStartTime = this.audio.ctx.currentTime + 0.05;
-    this.bossHP = 100;
-    this.orionHP = 100;
-    this.barCount = 0;
-    this.totalBarsInPhase = 32;
-    this.combo = 0;
-    this.storyFlags = {};
-    this.victoryTimer = 0;
-    this.bossDestroyed = false;
-    this.generateBossNotesStream(32);
-    this.mitePose = MITE_EXT_FRAMES.COMBO_CHEER;
-    this.setDialogue('CENTINELA', 'ANOMALÍA DETECTADA. BARRIDO LÁSER EN CURSO.', 3.0);
+    try {
+      this.phase = GAME_PHASES.PHASE_2_DUEL;
+      this.audio.mode = 'BOSS_DUEL';
+      this.audio.stopMusic();
+      this.audio.startMusic();
+      this.songStartTime = (this.audio.ctx && this.audio.ctx.currentTime > 0) ? (this.audio.ctx.currentTime + 0.05) : (performance.now() / 1000);
+      this.gameSongTime = 0;
+      this.bossHP = 100;
+      this.orionHP = 100;
+      this.barCount = 0;
+      this.totalBarsInPhase = 32;
+      this.combo = 0;
+      this.storyFlags = {};
+      this.victoryTimer = 0;
+      this.bossDestroyed = false;
+      this.generateBossNotesStream(32);
+      this.mitePose = MITE_EXT_FRAMES.COMBO_CHEER;
+      this.setDialogue('CENTINELA', 'ANOMALÍA DETECTADA. BARRIDO LÁSER EN CURSO.', 3.0);
+    } catch (err) {
+      console.error('Error al iniciar boss duel:', err);
+    } finally {
+      const countdownOverlay = document.getElementById('hud-countdown-overlay');
+      if (countdownOverlay) countdownOverlay.style.display = 'none';
+    }
+  }
 
-    const countdownOverlay = document.getElementById('hud-countdown-overlay');
-    if (countdownOverlay) countdownOverlay.style.display = 'none';
-  }  generateBossNotesStream(numBars) {
+  // Generar notas para el Tutorial Progresivo (16 Compases con Lead-in suave)
+  generateTutorialNotesStream(numBars) {
+    this.notesStream = [];
+    const arrowKeys = ['LEFT', 'DOWN', 'UP', 'RIGHT'];
+
+    for (let bar = 0; bar < numBars; bar++) {
+      const barStartTime = bar * BAR_DUR;
+
+      if (bar === 0) {
+        // Compás 0: Lead-in de orientación (flechas en tiempos 2 y 3 para que bajen desde arriba)
+        this.notesStream.push({ lane: 'LEFT', targetTime: barStartTime + (2 * BEAT_DUR), hit: false, missed: false, isBeatDrop: false });
+        this.notesStream.push({ lane: 'DOWN', targetTime: barStartTime + (3 * BEAT_DUR), hit: false, missed: false, isBeatDrop: false });
+      } else if (bar < 4) {
+        // Compases 1-3: Introducción básica (1 flecha en tiempos 0 y 2)
+        const laneA = arrowKeys[bar % 4];
+        const laneB = arrowKeys[(bar + 2) % 4];
+        this.notesStream.push({ lane: laneA, targetTime: barStartTime + (0 * BEAT_DUR), hit: false, missed: false, isBeatDrop: false });
+        this.notesStream.push({ lane: laneB, targetTime: barStartTime + (2 * BEAT_DUR), hit: false, missed: false, isBeatDrop: false });
+      } else if (bar < 8) {
+        // Compases 4-7: Dos pasos + Beat Drop en tiempo 3
+        const laneA = arrowKeys[Math.floor(Math.random() * 4)];
+        const laneB = arrowKeys[Math.floor(Math.random() * 4)];
+        this.notesStream.push({ lane: laneA, targetTime: barStartTime + (0 * BEAT_DUR), hit: false, missed: false, isBeatDrop: false });
+        this.notesStream.push({ lane: laneB, targetTime: barStartTime + (2 * BEAT_DUR), hit: false, missed: false, isBeatDrop: false });
+        this.notesStream.push({ lane: 'HIT', targetTime: barStartTime + (3 * BEAT_DUR), hit: false, missed: false, isBeatDrop: true });
+      } else {
+        // Compases 8-15: Grabación completa de Mite (3 notas + Beat Drop)
+        for (let beat = 0; beat < 3; beat++) {
+          const laneId = arrowKeys[Math.floor(Math.random() * 4)];
+          this.notesStream.push({ lane: laneId, targetTime: barStartTime + (beat * BEAT_DUR), hit: false, missed: false, isBeatDrop: false });
+        }
+        this.notesStream.push({ lane: 'HIT', targetTime: barStartTime + (3 * BEAT_DUR), hit: false, missed: false, isBeatDrop: true });
+      }
+    }
+  }
+
+  // Generar notas para la Batalla de 32 Compases contra el Centinela
+  generateBossNotesStream(numBars) {
     this.notesStream = [];
     const arrowKeys = ['LEFT', 'DOWN', 'UP', 'RIGHT'];
 
@@ -452,16 +501,16 @@ class GameEngine {
         // Coro: Ritmo completo de 4 golpes sincopados
         for (let beat = 0; beat < 3; beat++) {
           const laneId = arrowKeys[Math.floor(Math.random() * 4)];
-          this.notesStream.push({ lane: laneId, targetTime: barStartTime + (beat * BEAT_DUR) + 0.05, hit: false, missed: false, isBeatDrop: false });
+          this.notesStream.push({ lane: laneId, targetTime: barStartTime + (beat * BEAT_DUR), hit: false, missed: false, isBeatDrop: false });
         }
-        this.notesStream.push({ lane: 'HIT', targetTime: barStartTime + (3 * BEAT_DUR) + 0.05, hit: false, missed: false, isBeatDrop: true });
+        this.notesStream.push({ lane: 'HIT', targetTime: barStartTime + (3 * BEAT_DUR), hit: false, missed: false, isBeatDrop: true });
       } else {
         // Versos y solos: 2-3 notas dinámicas
         for (let beat = 0; beat < 3; beat += (bar % 2 === 0 ? 1 : 2)) {
           const laneId = arrowKeys[Math.floor(Math.random() * 4)];
-          this.notesStream.push({ lane: laneId, targetTime: barStartTime + (beat * BEAT_DUR) + 0.05, hit: false, missed: false, isBeatDrop: false });
+          this.notesStream.push({ lane: laneId, targetTime: barStartTime + (beat * BEAT_DUR), hit: false, missed: false, isBeatDrop: false });
         }
-        this.notesStream.push({ lane: 'HIT', targetTime: barStartTime + (3 * BEAT_DUR) + 0.05, hit: false, missed: false, isBeatDrop: true });
+        this.notesStream.push({ lane: 'HIT', targetTime: barStartTime + (3 * BEAT_DUR), hit: false, missed: false, isBeatDrop: true });
       }
     }
   }
@@ -515,7 +564,7 @@ class GameEngine {
   }
 
   handleAction(action) {
-    const songTime = this.audio.ctx ? (this.audio.ctx.currentTime - this.songStartTime) : 0;
+    const songTime = this.gameSongTime || 0;
     
     // Ventana de juicio generosa (±220 ms)
     const candidate = this.notesStream.find(n => 
@@ -638,19 +687,19 @@ class GameEngine {
     // Control de Cuenta Regresiva (3, 2, 1, ¡FLOW!)
     if (this.phase === GAME_PHASES.COUNTDOWN_TUTORIAL || this.phase === GAME_PHASES.COUNTDOWN_BOSS) {
       this.countdownTimer -= dt;
-      if (this.countdownTimer > 2.7) {
+      if (this.countdownTimer > 1.8) {
         if (this.lastCountdownBeat > 3) {
           this.lastCountdownBeat = 3;
           this.updateCountdownDisplay('3', '¡PREPÁRATE!');
           if (this.audio.playCountdownBeat) this.audio.playCountdownBeat(1);
         }
-      } else if (this.countdownTimer > 1.8) {
+      } else if (this.countdownTimer > 1.2) {
         if (this.lastCountdownBeat > 2) {
           this.lastCountdownBeat = 2;
           this.updateCountdownDisplay('2', '¡AL RITMO!');
           if (this.audio.playCountdownBeat) this.audio.playCountdownBeat(2);
         }
-      } else if (this.countdownTimer > 0.9) {
+      } else if (this.countdownTimer > 0.6) {
         if (this.lastCountdownBeat > 1) {
           this.lastCountdownBeat = 1;
           this.updateCountdownDisplay('1', '¡ATENTO!');
@@ -664,7 +713,8 @@ class GameEngine {
         }
       } else {
         // Fin de cuenta regresiva -> Lanzar juego
-        if (this.targetAfterCountdown === GAME_PHASES.PHASE_1_TUTORIAL) {
+        const target = this.targetAfterCountdown;
+        if (target === GAME_PHASES.PHASE_1_TUTORIAL) {
           this.actuallyStartTutorial();
         } else {
           this.actuallyStartBoss();
@@ -676,7 +726,13 @@ class GameEngine {
       return;
     }
 
-    const songTime = this.audio.ctx ? (this.audio.ctx.currentTime - this.songStartTime) : 0;
+    // Calcular songTime robusto (sincronizado a Web Audio con fallback a reloj de juego)
+    this.gameSongTime = (this.gameSongTime || 0) + dt;
+    let songTime = this.gameSongTime;
+    if (this.audio.ctx && this.audio.ctx.state === 'running' && this.audio.ctx.currentTime > this.songStartTime) {
+      songTime = this.audio.ctx.currentTime - this.songStartTime;
+      this.gameSongTime = songTime;
+    }
     const beatPhase = (songTime / BEAT_DUR) % 1;
 
     // Actualizaciones de tiempo
