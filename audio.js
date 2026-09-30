@@ -773,6 +773,74 @@ class RhythmAudioSystem {
       osc.onended = () => { osc.disconnect(); gain.disconnect(); };
     });
   }
+
+  playSpecialOverdrive() {
+    this.ensureContext();
+    if (!this.ctx || this.isMuted) return;
+    const now = this.ctx.currentTime;
+
+    // 1. Arpegio Rápido de Sobrecarga Cuántica (G#4, B4, D#5, G#5, C#6)
+    const arpeggio = [415.30, 493.88, 622.25, 830.61, 1108.73];
+    arpeggio.forEach((freq, idx) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.04);
+
+      gain.gain.setValueAtTime(0.30, now + idx * 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.04 + 0.35);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+
+      osc.start(now + idx * 0.04);
+      osc.stop(now + idx * 0.04 + 0.38);
+      osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+    });
+
+    // 2. Sweep de Filtro Resonante Funk y Sobrecarga
+    const filterOsc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    const filterGain = this.ctx.createGain();
+
+    filterOsc.type = 'sawtooth';
+    filterOsc.frequency.setValueAtTime(103.83, now); // G#2
+    filterOsc.frequency.linearRampToValueAtTime(207.65, now + 0.5);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(400, now);
+    filter.frequency.exponentialRampToValueAtTime(6000, now + 0.25);
+    filter.frequency.exponentialRampToValueAtTime(300, now + 0.8);
+    filter.Q.setValueAtTime(8, now);
+
+    filterGain.gain.setValueAtTime(0.40, now);
+    filterGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.85);
+
+    filterOsc.connect(filter);
+    filter.connect(filterGain);
+    filterGain.connect(this.sfxGain);
+
+    filterOsc.start(now);
+    filterOsc.stop(now + 0.90);
+    filterOsc.onended = () => { filterOsc.disconnect(); filter.disconnect(); filterGain.disconnect(); };
+
+    // 3. Impacto de Sub-Bajo de Descarga
+    const subOsc = this.ctx.createOscillator();
+    const subGain = this.ctx.createGain();
+    subOsc.type = 'sine';
+    subOsc.frequency.setValueAtTime(130, now);
+    subOsc.frequency.exponentialRampToValueAtTime(32, now + 0.6);
+
+    subGain.gain.setValueAtTime(0.55, now);
+    subGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.65);
+
+    subOsc.connect(subGain);
+    subGain.connect(this.sfxGain);
+
+    subOsc.start(now);
+    subOsc.stop(now + 0.70);
+    subOsc.onended = () => { subOsc.disconnect(); subGain.disconnect(); };
+  }
 }
 
 window.audioSystem = new RhythmAudioSystem();

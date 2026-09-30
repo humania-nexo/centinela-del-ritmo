@@ -61,12 +61,12 @@ const BOSS_FRAMES = {
   HURT_GLITCH: 3
 };
 
-// Definición de Carriles de Flechas (Guitar Hero Highway)
+// Definición de Carriles de Flechas (Guitar Hero Highway - 4 Carriles Centrados)
 const HIGHWAY_LANES = [
-  { id: 'LEFT',  name: 'Izquierda', symbol: '◀', color: '#00E5FF', x: 135 },
-  { id: 'DOWN',  name: 'Abajo',     symbol: '▼', color: '#FFE066', x: 172 },
-  { id: 'UP',    name: 'Arriba',    symbol: '▲', color: '#00FFAA', x: 209 },
-  { id: 'RIGHT', name: 'Derecha',   symbol: '▶', color: '#FF0055', x: 246 }
+  { id: 'LEFT',  name: 'Izquierda', symbol: '◀', color: '#00E5FF', x: 114 },
+  { id: 'DOWN',  name: 'Abajo',     symbol: '▼', color: '#FFE066', x: 156 },
+  { id: 'UP',    name: 'Arriba',    symbol: '▲', color: '#00FFAA', x: 198 },
+  { id: 'RIGHT', name: 'Derecha',   symbol: '▶', color: '#FF0055', x: 240 }
 ];
 
 class GameEngine {
@@ -92,8 +92,10 @@ class GameEngine {
     };
     this._loadAssets();
 
-    // Métricas del juego
-    this.flowMeter = 20; // 0 a 100
+    // Métricas del juego y barra de Flow (Sobrecarga Especial)
+    this.flowMeter = 20; // 0 a 100 (al llegar a 100 habilita el Movimiento Especial)
+    this.specialEffectTimer = 0; // Duración de la alteración cromática y descarga de poder
+    this.specialShockwaves = [];
     this.combo = 0;
     this.maxCombo = 0;
     this.score = 0;
@@ -145,13 +147,12 @@ class GameEngine {
     this.orionX = 110;
     this.orionY = 135;
 
-    // Controles táctiles e interactivos integrados directamente en los receptores del Highway
+    // Receptores interactivos del Highway (4 flechas simétricas)
     this.virtualButtons = [
-      { id: 'LEFT',  x: 135, y: 158, w: 32, h: 32, label: '◀', active: false },
-      { id: 'DOWN',  x: 172, y: 158, w: 32, h: 32, label: '▼', active: false },
-      { id: 'UP',    x: 209, y: 158, w: 32, h: 32, label: '▲', active: false },
-      { id: 'RIGHT', x: 246, y: 158, w: 32, h: 32, label: '▶', active: false },
-      { id: 'HIT',   x: 283, y: 158, w: 38, h: 32, label: 'DROP', active: false }
+      { id: 'LEFT',  x: 114, y: 158, w: 32, h: 32, label: '◀', active: false },
+      { id: 'DOWN',  x: 156, y: 158, w: 32, h: 32, label: '▼', active: false },
+      { id: 'UP',    x: 198, y: 158, w: 32, h: 32, label: '▲', active: false },
+      { id: 'RIGHT', x: 240, y: 158, w: 32, h: 32, label: '▶', active: false }
     ];
 
     this._bindEvents();
@@ -229,7 +230,7 @@ class GameEngine {
       if (e.code === 'ArrowDown'  || e.code === 'KeyS') action = 'DOWN';
       if (e.code === 'ArrowUp'    || e.code === 'KeyW') action = 'UP';
       if (e.code === 'ArrowRight' || e.code === 'KeyD') action = 'RIGHT';
-      if (e.code === 'Space'      || e.code === 'Enter') action = 'HIT';
+      if (e.code === 'Space'      || e.code === 'Enter' || e.code === 'KeyE') action = 'SPECIAL';
 
       if (action) {
         this.handleAction(action);
@@ -245,7 +246,7 @@ class GameEngine {
       if (e.code === 'ArrowDown'  || e.code === 'KeyS') action = 'DOWN';
       if (e.code === 'ArrowUp'    || e.code === 'KeyW') action = 'UP';
       if (e.code === 'ArrowRight' || e.code === 'KeyD') action = 'RIGHT';
-      if (e.code === 'Space'      || e.code === 'Enter') action = 'HIT';
+      if (e.code === 'Space'      || e.code === 'Enter' || e.code === 'KeyE') action = 'SPECIAL';
 
       if (action) {
         const b = this.virtualButtons.find(btn => btn.id === action);
@@ -452,7 +453,7 @@ class GameEngine {
     }
   }
 
-  // Generar notas para el Tutorial Progresivo (16 Compases con Lead-in suave)
+  // Generar notas para el Tutorial Progresivo (16 Compases con Lead-in suave - 4 Flechas)
   generateTutorialNotesStream(numBars) {
     this.notesStream = [];
     const arrowKeys = ['LEFT', 'DOWN', 'UP', 'RIGHT'];
@@ -462,33 +463,34 @@ class GameEngine {
 
       if (bar === 0) {
         // Compás 0: Lead-in de orientación (flechas en tiempos 2 y 3 para que bajen desde arriba)
-        this.notesStream.push({ lane: 'LEFT', targetTime: barStartTime + (2 * BEAT_DUR), hit: false, missed: false, isBeatDrop: false });
-        this.notesStream.push({ lane: 'DOWN', targetTime: barStartTime + (3 * BEAT_DUR), hit: false, missed: false, isBeatDrop: false });
+        this.notesStream.push({ lane: 'LEFT', targetTime: barStartTime + (2 * BEAT_DUR), hit: false, missed: false });
+        this.notesStream.push({ lane: 'DOWN', targetTime: barStartTime + (3 * BEAT_DUR), hit: false, missed: false });
       } else if (bar < 4) {
         // Compases 1-3: Introducción básica (1 flecha en tiempos 0 y 2)
         const laneA = arrowKeys[bar % 4];
         const laneB = arrowKeys[(bar + 2) % 4];
-        this.notesStream.push({ lane: laneA, targetTime: barStartTime + (0 * BEAT_DUR), hit: false, missed: false, isBeatDrop: false });
-        this.notesStream.push({ lane: laneB, targetTime: barStartTime + (2 * BEAT_DUR), hit: false, missed: false, isBeatDrop: false });
+        this.notesStream.push({ lane: laneA, targetTime: barStartTime + (0 * BEAT_DUR), hit: false, missed: false });
+        this.notesStream.push({ lane: laneB, targetTime: barStartTime + (2 * BEAT_DUR), hit: false, missed: false });
       } else if (bar < 8) {
-        // Compases 4-7: Dos pasos + Beat Drop en tiempo 3
+        // Compases 4-7: Ritmo dinámico de 3 flechas sincopadas
         const laneA = arrowKeys[Math.floor(Math.random() * 4)];
         const laneB = arrowKeys[Math.floor(Math.random() * 4)];
-        this.notesStream.push({ lane: laneA, targetTime: barStartTime + (0 * BEAT_DUR), hit: false, missed: false, isBeatDrop: false });
-        this.notesStream.push({ lane: laneB, targetTime: barStartTime + (2 * BEAT_DUR), hit: false, missed: false, isBeatDrop: false });
-        this.notesStream.push({ lane: 'HIT', targetTime: barStartTime + (3 * BEAT_DUR), hit: false, missed: false, isBeatDrop: true });
+        const laneC = arrowKeys[Math.floor(Math.random() * 4)];
+        this.notesStream.push({ lane: laneA, targetTime: barStartTime + (0 * BEAT_DUR), hit: false, missed: false });
+        this.notesStream.push({ lane: laneB, targetTime: barStartTime + (1 * BEAT_DUR), hit: false, missed: false });
+        this.notesStream.push({ lane: laneC, targetTime: barStartTime + (2 * BEAT_DUR), hit: false, missed: false });
       } else {
-        // Compases 8-15: Grabación completa de Mite (3 notas + Beat Drop)
-        for (let beat = 0; beat < 3; beat++) {
+        // Compases 8-15: Grabación completa de Mite (3 a 4 notas de coreografía completa)
+        for (let beat = 0; beat < 4; beat++) {
+          if (beat === 3 && Math.random() < 0.3) continue; // Variación rítmica sutil
           const laneId = arrowKeys[Math.floor(Math.random() * 4)];
-          this.notesStream.push({ lane: laneId, targetTime: barStartTime + (beat * BEAT_DUR), hit: false, missed: false, isBeatDrop: false });
+          this.notesStream.push({ lane: laneId, targetTime: barStartTime + (beat * BEAT_DUR), hit: false, missed: false });
         }
-        this.notesStream.push({ lane: 'HIT', targetTime: barStartTime + (3 * BEAT_DUR), hit: false, missed: false, isBeatDrop: true });
       }
     }
   }
 
-  // Generar notas para la Batalla de 32 Compases contra el Centinela
+  // Generar notas para la Batalla de 32 Compases contra el Centinela (4 Flechas)
   generateBossNotesStream(numBars) {
     this.notesStream = [];
     const arrowKeys = ['LEFT', 'DOWN', 'UP', 'RIGHT'];
@@ -498,19 +500,18 @@ class GameEngine {
       const isChorus = (bar >= 4 && bar <= 11) || (bar >= 20 && bar <= 27);
 
       if (isChorus) {
-        // Coro: Ritmo completo de 4 golpes sincopados
-        for (let beat = 0; beat < 3; beat++) {
+        // Coro: Cadencia enérgica de 4 notas por compás
+        for (let beat = 0; beat < 4; beat++) {
           const laneId = arrowKeys[Math.floor(Math.random() * 4)];
-          this.notesStream.push({ lane: laneId, targetTime: barStartTime + (beat * BEAT_DUR), hit: false, missed: false, isBeatDrop: false });
+          this.notesStream.push({ lane: laneId, targetTime: barStartTime + (beat * BEAT_DUR), hit: false, missed: false });
         }
-        this.notesStream.push({ lane: 'HIT', targetTime: barStartTime + (3 * BEAT_DUR), hit: false, missed: false, isBeatDrop: true });
       } else {
-        // Versos y solos: 2-3 notas dinámicas
-        for (let beat = 0; beat < 3; beat += (bar % 2 === 0 ? 1 : 2)) {
+        // Versos y solos: 3 notas con síncopa funk
+        for (let beat = 0; beat < 4; beat++) {
+          if (beat === 1 && bar % 2 === 0) continue;
           const laneId = arrowKeys[Math.floor(Math.random() * 4)];
-          this.notesStream.push({ lane: laneId, targetTime: barStartTime + (beat * BEAT_DUR), hit: false, missed: false, isBeatDrop: false });
+          this.notesStream.push({ lane: laneId, targetTime: barStartTime + (beat * BEAT_DUR), hit: false, missed: false });
         }
-        this.notesStream.push({ lane: 'HIT', targetTime: barStartTime + (3 * BEAT_DUR), hit: false, missed: false, isBeatDrop: true });
       }
     }
   }
@@ -555,7 +556,7 @@ class GameEngine {
         this.setDialogue('CENTINELA', 'ALERTA: DISPERSIÓN DE FRECUENCIA AL 60%. INICIANDO PURGA.');
       } else if (currentBar === 22 && !this.storyFlags['boss_22']) {
         this.storyFlags['boss_22'] = true;
-        this.setDialogue('ORION', '¡Mite, enfoca bien! ¡Vamos a rematar esto con el solo de rifle!');
+        this.setDialogue('ORION', '¡Mite, enfoca bien! ¡Vamos a rematar esto con la sobrecarga!');
       } else if (currentBar === 27 && !this.storyFlags['boss_27']) {
         this.storyFlags['boss_27'] = true;
         this.setDialogue('MITE', '¡Las pantallas del Coliseo transmiten tu baile a toda la red!');
@@ -563,12 +564,91 @@ class GameEngine {
     }
   }
 
+  // Activación de Movimiento Especial / Sobrecarga de Flow al 100%
+  triggerSpecialOverdrive() {
+    if (this.flowMeter < 100) {
+      this.spawnPopup(`⚡ FLOW AL ${Math.floor(this.flowMeter)}% (NECESITAS 100%)`, '#FFE066', '#00E5FF');
+      return;
+    }
+
+    // 1. Consumir la barra de Flow para reiniciar el ciclo de carga
+    this.flowMeter = 0;
+    this.specialEffectTimer = 2.4; // 2.4s de alteración cromática y descarga estroboscópica
+    this.trauma = 0.45;
+
+    // 2. Audio procedural de sobrecarga funk cuántica
+    if (this.audio.playSpecialOverdrive) {
+      this.audio.playSpecialOverdrive();
+    }
+
+    // 3. Pose emblemática de Orion y reacción de Mite
+    this.orionPose = ORION_EXT_FRAMES.AIR_GUITAR_RIFLE;
+    this.orionPoseTimer = 2.4;
+    this.orionStumble = false;
+    this.mitePose = MITE_EXT_FRAMES.SUNGLASSES_GROOVE;
+
+    // 4. Ondas de choque psicodélicas y partículas expansivas
+    this.emitSpecialOverdriveBursts(110, 135);
+
+    // 5. Daño masivo al Boss o bonificación crítica en Tutorial
+    if (this.phase === GAME_PHASES.PHASE_2_DUEL) {
+      this.bossHP = Math.max(0, this.bossHP - 25);
+      this.bossPose = BOSS_FRAMES.HURT_GLITCH;
+      this.emitParticles(275, 110, '#FFE066', 30);
+      this.emitParticles(275, 110, '#00E5FF', 30);
+      this.emitParticles(275, 110, '#FF0055', 30);
+      this.setDialogue('MITE', '¡SOBRECARGA SÓNICA! ¡Centinela impactado por 25% de daño!', 4.0);
+    } else {
+      this.score += 2500;
+      this.combo += 10;
+      this.setDialogue('MITE', '¡DESCARGA DE FLOW TOTAL! ¡El Cortafuegos está al límite!', 4.0);
+    }
+
+    this.spawnPopup("⚡ ¡DESCARGA SÓNICA! ¡FLOW OVERDRIVE! ⚡", "#FFE066", "#FF0055");
+  }
+
+  emitSpecialOverdriveBursts(x, y) {
+    // Ondas expansivas concéntricas de colores
+    const colors = ['#00E5FF', '#FFE066', '#FF0055', '#00FFAA', '#FFFFFF'];
+    colors.forEach((c, idx) => {
+      this.specialShockwaves.push({
+        x: x,
+        y: y,
+        radius: 10 + idx * 8,
+        vr: 180 + idx * 40,
+        alpha: 1.0,
+        color: c
+      });
+    });
+
+    // Ráfaga de partículas multicolor
+    for (let i = 0; i < 40; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const spd = Math.random() * 120 + 30;
+      this.particles.push({
+        x: x,
+        y: y,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd,
+        size: Math.random() * 4 + 2,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        life: 1.2,
+        maxLife: 1.2
+      });
+    }
+  }
+
   handleAction(action) {
+    if (action === 'SPECIAL') {
+      this.triggerSpecialOverdrive();
+      return;
+    }
+
     const songTime = this.gameSongTime || 0;
     
-    // Ventana de juicio generosa (±220 ms)
+    // Ventana de juicio generosa (±220 ms) en las 4 flechas
     const candidate = this.notesStream.find(n => 
-      (n.lane === action || (action === 'HIT' && n.isBeatDrop)) && 
+      n.lane === action && 
       !n.hit && !n.missed && 
       Math.abs(songTime - n.targetTime) <= 0.220
     );
@@ -577,7 +657,7 @@ class GameEngine {
       const diffMs = Math.abs(songTime - candidate.targetTime) * 1000;
       candidate.hit = true;
 
-      // 1. ACTIVACIÓN INMEDIATA DEL PASO DE BAILE SEGÚN LA TECLA PULSADA
+      // 1. ACTIVACIÓN INMEDIATA DEL PASO DE BAILE SEGÚN LA FLECHA PULSADA
       if (action === 'LEFT') {
         this.orionPose = (Math.random() < 0.5) ? ORION_EXT_FRAMES.MOONWALK : ORION_EXT_FRAMES.RUNNING_MAN;
       } else if (action === 'DOWN') {
@@ -586,8 +666,6 @@ class GameEngine {
         this.orionPose = (Math.random() < 0.5) ? ORION_EXT_FRAMES.ROBOT_POPPING : ORION_EXT_FRAMES.HEADSPIN_BURST;
       } else if (action === 'RIGHT') {
         this.orionPose = (Math.random() < 0.5) ? ORION_EXT_FRAMES.SPIN_360 : ORION_EXT_FRAMES.HIP_HOP_BOUNCE;
-      } else if (action === 'HIT') {
-        this.orionPose = ORION_EXT_FRAMES.AIR_GUITAR_RIFLE;
       }
 
       this.orionPoseTimer = BEAT_DUR * 1.6;
@@ -595,26 +673,26 @@ class GameEngine {
 
       // Partículas y estela holográfica de baile
       const laneObj = HIGHWAY_LANES.find(l => l.id === action);
-      const color = laneObj ? laneObj.color : '#FF0055';
+      const color = laneObj ? laneObj.color : '#00E5FF';
       this.emitParticles(110, 145, color, 12);
       this.orionTrails.unshift({ x: 110, y: 135, frame: this.orionPose, alpha: 0.85 });
 
-      // 2. EVALUAR PRECISIÓN Y SCORE
+      // 2. EVALUAR PRECISIÓN, CARGA DE FLOW Y SCORE
       if (diffMs <= 75) {
         // EXCELENTE / PERFECT
         this.audio.playPerfectHit();
         this.combo++;
         this.maxCombo = Math.max(this.maxCombo, this.combo);
         this.score += 1000 * (this.combo > 5 ? 2 : 1);
-        this.flowMeter = Math.min(100, this.flowMeter + 8);
+        this.flowMeter = Math.min(100, this.flowMeter + 10);
         this.trauma += 0.08;
         this.spawnPopup("¡DING-PUM! ¡FLOW CARÍSIMO!", "#FFE066", "#00E5FF");
         this.mitePose = (this.combo >= 4) ? MITE_EXT_FRAMES.SUNGLASSES_GROOVE : MITE_EXT_FRAMES.COMBO_CHEER;
 
         if (this.phase === GAME_PHASES.PHASE_2_DUEL) {
-          this.bossHP = Math.max(0, this.bossHP - 4);
+          this.bossHP = Math.max(0, this.bossHP - 3.5);
           this.bossPose = BOSS_FRAMES.HURT_GLITCH;
-          this.emitParticles(275, 110, '#00E5FF', 16);
+          this.emitParticles(275, 110, '#00E5FF', 14);
         }
       } else if (diffMs <= 155) {
         // BIEN / GREAT
@@ -622,25 +700,31 @@ class GameEngine {
         this.combo++;
         this.maxCombo = Math.max(this.maxCombo, this.combo);
         this.score += 600;
-        this.flowMeter = Math.min(100, this.flowMeter + 5);
+        this.flowMeter = Math.min(100, this.flowMeter + 6);
         this.trauma += 0.04;
         this.spawnPopup("¡BUEN RITMO!", "#00FFAA", "#008855");
         this.mitePose = MITE_EXT_FRAMES.COMBO_CHEER;
 
         if (this.phase === GAME_PHASES.PHASE_2_DUEL) {
-          this.bossHP = Math.max(0, this.bossHP - 2.5);
+          this.bossHP = Math.max(0, this.bossHP - 2.0);
           this.emitParticles(275, 110, '#00FFAA', 8);
         }
       } else {
         // OK / GOOD
         this.audio.playGoodHit();
         this.score += 300;
-        this.flowMeter = Math.min(100, this.flowMeter + 2);
+        this.flowMeter = Math.min(100, this.flowMeter + 3);
         this.spawnPopup("¡A TIEMPO!", "#00E5FF", "#004488");
 
         if (this.phase === GAME_PHASES.PHASE_2_DUEL) {
-          this.bossHP = Math.max(0, this.bossHP - 1.5);
+          this.bossHP = Math.max(0, this.bossHP - 1.0);
         }
+      }
+
+      // Notificación especial al llenar la barra al 100%
+      if (this.flowMeter >= 100 && !this.storyFlags['flow_100_notified']) {
+        this.storyFlags['flow_100_notified'] = true;
+        this.spawnPopup("⚡ ¡FLOW AL 100%! ¡DESATA EL MOVIMIENTO ESPECIAL! ⚡", "#FFE066", "#FF0055");
       }
     }
   }
@@ -735,9 +819,17 @@ class GameEngine {
     }
     const beatPhase = (songTime / BEAT_DUR) % 1;
 
-    // Actualizaciones de tiempo
+    // Actualizaciones de tiempo y Sobrecarga Especial
     if (this.trauma > 0) this.trauma = Math.max(0, this.trauma - dt * 2.0);
     if (this.dialogueTimer > 0) this.dialogueTimer -= dt;
+    if (this.specialEffectTimer > 0) this.specialEffectTimer -= dt;
+
+    // Actualizar ondas de choque psicodélicas del movimiento especial
+    for (let sw of this.specialShockwaves) {
+      sw.radius += sw.vr * dt;
+      sw.alpha -= dt * 0.9;
+    }
+    this.specialShockwaves = this.specialShockwaves.filter(sw => sw.alpha > 0);
 
     if (this.orionPoseTimer > 0) {
       this.orionPoseTimer -= dt;
@@ -762,10 +854,13 @@ class GameEngine {
       }
     }
 
-    // Estelas Holográficas en acrobacias
-    if (this.orionPose === ORION_EXT_FRAMES.FLAIR_POWER || this.orionPose === ORION_EXT_FRAMES.HEADSPIN_BURST || this.orionPose === ORION_EXT_FRAMES.AIR_GUITAR_RIFLE) {
-      this.orionTrails.unshift({ x: this.orionX || 110, y: this.orionY || 135, frame: this.orionPose, alpha: 0.7 });
-      if (this.orionTrails.length > 5) this.orionTrails.pop();
+    // Estelas Holográficas en acrobacias y sobrecarga
+    if (this.orionPose === ORION_EXT_FRAMES.FLAIR_POWER || 
+        this.orionPose === ORION_EXT_FRAMES.HEADSPIN_BURST || 
+        this.orionPose === ORION_EXT_FRAMES.AIR_GUITAR_RIFLE ||
+        this.specialEffectTimer > 0) {
+      this.orionTrails.unshift({ x: this.orionX || 110, y: this.orionY || 135, frame: this.orionPose, alpha: 0.85 });
+      if (this.orionTrails.length > 6) this.orionTrails.pop();
     }
     for (let tr of this.orionTrails) tr.alpha -= dt * 3.0;
     this.orionTrails = this.orionTrails.filter(tr => tr.alpha > 0);
@@ -828,7 +923,6 @@ class GameEngine {
     const bossBox = document.getElementById('hud-boss-box');
     const bossFill = document.getElementById('hud-boss-fill');
     const bossVal = document.getElementById('hud-boss-val');
-    const dialogueBanner = document.getElementById('hud-dialogue-banner');
     const speakerBadge = document.getElementById('hud-speaker-badge');
     const dialogueContent = document.getElementById('hud-dialogue-content');
     const victoryCard = document.getElementById('hud-victory-card');
@@ -838,11 +932,37 @@ class GameEngine {
     const modalDesc = document.getElementById('hud-modal-desc');
     const modalBtn = document.getElementById('hud-modal-btn');
 
-    if (flowFill) flowFill.style.width = `${Math.floor(this.flowMeter)}%`;
-    if (flowVal) flowVal.textContent = `${Math.floor(this.flowMeter)}%`;
+    const flowPercent = Math.min(100, Math.floor(this.flowMeter));
+    if (flowFill) {
+      flowFill.style.width = `${flowPercent}%`;
+      if (flowPercent >= 100) flowFill.classList.add('full-flow');
+      else flowFill.classList.remove('full-flow');
+    }
+    if (flowVal) flowVal.textContent = `${flowPercent}%`;
     if (scoreVal) scoreVal.textContent = `SCORE: ${this.score}`;
     if (comboVal) comboVal.textContent = `COMBO: x${this.combo}`;
     if (barVal) barVal.textContent = `COMPÁS: ${this.barCount}/${this.totalBarsInPhase}`;
+
+    // Sincronización del Botón de Movimiento Especial del Pad Táctil
+    const specialBtn = document.getElementById('btn-special-move');
+    const specialTitle = document.getElementById('special-btn-title');
+    const specialSub = document.getElementById('special-btn-sub');
+    const specialProgress = document.getElementById('special-btn-progress');
+
+    if (specialBtn && specialTitle && specialSub) {
+      if (flowPercent >= 100) {
+        specialBtn.classList.add('ready');
+        specialTitle.textContent = '⚡ ¡DESCARGA SÓNICA! [LISTO]';
+        specialSub.textContent = 'TOCA O [ESPACIO] PARA ACTIVAR SOBRECARGA';
+      } else {
+        specialBtn.classList.remove('ready');
+        specialTitle.textContent = `DESCARGA SÓNICA • [ ${flowPercent}% ]`;
+        specialSub.textContent = 'LLENA LA BARRA DE FLOW PARA DESATAR';
+      }
+    }
+    if (specialProgress) {
+      specialProgress.style.width = `${flowPercent}%`;
+    }
 
     // Boss Bar
     if (bossBox) {
@@ -1230,7 +1350,42 @@ class GameEngine {
       ctx.restore();
     }
 
-    // 5. ESTELAS HOLOGRÁFICAS DE ORION
+    // 5. ONDAS DE CHOQUE DE SOBRECARGA ESPECIAL (ALTERACIÓN CROMÁTICA)
+    for (let sw of this.specialShockwaves) {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, sw.alpha);
+      ctx.strokeStyle = sw.color;
+      ctx.lineWidth = 3.5;
+      ctx.shadowColor = sw.color;
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 6. DISTORSIÓN Y PULSO CROMÁTICO EN SOBRECARGA SÓNICA
+    if (this.specialEffectTimer > 0) {
+      const colorHue = Math.floor(songTime * 540) % 360;
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      ctx.fillStyle = `hsla(${colorHue}, 100%, 65%, 0.22)`;
+      ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
+
+      // Líneas estroboscópicas de síncopa cuántica
+      ctx.strokeStyle = `hsla(${colorHue + 180}, 100%, 75%, 0.35)`;
+      ctx.lineWidth = 1.5;
+      for (let y = 0; y < V_HEIGHT; y += 14) {
+        const shift = Math.sin(songTime * 25 + y * 0.1) * 6;
+        ctx.beginPath();
+        ctx.moveTo(0, y + shift);
+        ctx.lineTo(V_WIDTH, y + shift);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // 7. ESTELAS HOLOGRÁFICAS DE ORION
     for (let tr of this.orionTrails) {
       ctx.save();
       ctx.globalAlpha = tr.alpha * 0.45;
@@ -1240,7 +1395,7 @@ class GameEngine {
       ctx.restore();
     }
 
-    // 6. RENDER DE PERSONAJES
+    // 8. RENDER DE PERSONAJES
     if (this.phase === GAME_PHASES.VICTORY) {
       // Orion en el centro de la pista con la coreografía activa
       this.drawOrionSprite(ctx, this.orionX, this.orionY, beatPhase, songTime);
@@ -1284,7 +1439,7 @@ class GameEngine {
       }
     }
 
-    // 7. EFECTOS Y PARTÍCULAS GENERALES
+    // 9. EFECTOS Y PARTÍCULAS GENERALES
     for (let pt of this.particles) {
       ctx.fillStyle = pt.color;
       ctx.fillRect(pt.x, pt.y, pt.size, pt.size);
@@ -1293,7 +1448,7 @@ class GameEngine {
     ctx.restore();
   }
 
-  // Render del Highway Guitar Hero Stream (Flechas Flotantes)
+  // Render del Highway Guitar Hero Stream (4 Flechas Simétricas Centradas)
   drawHighwayStream(ctx, songTime, beatPhase) {
     if (this.phase === GAME_PHASES.TITLE || 
         this.phase === GAME_PHASES.PHASE_1_RECORDING_REPLAY || 
@@ -1304,14 +1459,14 @@ class GameEngine {
 
     ctx.save();
 
-    // Fondo del Highway translúcido centrado
+    // Fondo del Highway translúcido perfectamente centrado
     ctx.fillStyle = 'rgba(6, 10, 20, 0.82)';
-    ctx.fillRect(125, 30, 204, 174);
+    ctx.fillRect(104, 30, 176, 174);
     ctx.strokeStyle = 'rgba(0, 229, 255, 0.4)';
     ctx.lineWidth = 1;
-    ctx.strokeRect(125, 30, 204, 174);
+    ctx.strokeRect(104, 30, 176, 174);
 
-    // Carriles verticales de guía y receptores
+    // Carriles verticales de guía y receptores de las 4 flechas
     for (let lane of HIGHWAY_LANES) {
       const btn = this.virtualButtons.find(b => b.id === lane.id);
       const isActive = btn && btn.active;
@@ -1341,24 +1496,6 @@ class GameEngine {
       ctx.textBaseline = 'alphabetic';
     }
 
-    // Receptor del Beat Drop (Tiempo 4)
-    const dropBtn = this.virtualButtons.find(b => b.id === 'HIT');
-    const isDropActive = dropBtn && dropBtn.active;
-    const dropPulse = isDropActive ? 3 : (Math.sin(beatPhase * Math.PI * 2) * 1.5);
-
-    ctx.fillStyle = isDropActive ? '#FF0055' : 'rgba(255, 0, 85, 0.15)';
-    ctx.strokeStyle = isDropActive ? '#FFFFFF' : '#FF0055';
-    ctx.lineWidth = isDropActive ? 2 : 1.2;
-    ctx.fillRect(283, this.receptorY - 14, 38, 28);
-    ctx.strokeRect(283, this.receptorY - 14, 38, 28);
-
-    ctx.font = 'bold 9px monospace';
-    ctx.fillStyle = isDropActive ? '#FFFFFF' : '#FF0055';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('DROP', 302, this.receptorY + dropPulse);
-    ctx.textBaseline = 'alphabetic';
-
     // Dibujar las Notas Flotantes que caen en tiempo real
     for (let note of this.notesStream) {
       if (note.hit) continue;
@@ -1369,45 +1506,25 @@ class GameEngine {
 
       // Dibujar dentro del rango visible del Highway
       if (noteY >= 25 && noteY <= 204) {
-        if (note.isBeatDrop) {
-          ctx.fillStyle = note.missed ? '#475569' : '#FF0055';
-          ctx.strokeStyle = note.missed ? '#334155' : '#FF6699';
+        const lane = HIGHWAY_LANES.find(l => l.id === note.lane);
+        if (lane) {
+          ctx.fillStyle = note.missed ? '#475569' : lane.color;
+          ctx.strokeStyle = note.missed ? '#334155' : '#FFFFFF';
           ctx.lineWidth = 1;
           if (!note.missed) {
-            ctx.shadowColor = '#FF0055';
+            ctx.shadowColor = lane.color;
             ctx.shadowBlur = 6;
           }
-          ctx.fillRect(283, noteY - 12, 38, 24);
-          ctx.strokeRect(283, noteY - 12, 38, 24);
+          ctx.fillRect(lane.x, noteY - 12, 32, 24);
+          ctx.strokeRect(lane.x, noteY - 12, 32, 24);
           ctx.shadowBlur = 0;
 
-          ctx.fillStyle = '#FFFFFF';
-          ctx.font = 'bold 9px monospace';
+          ctx.font = 'bold 13px monospace';
+          ctx.fillStyle = note.missed ? '#94A3B8' : '#000000';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText('DROP', 302, noteY);
+          ctx.fillText(lane.symbol, lane.x + 16, noteY);
           ctx.textBaseline = 'alphabetic';
-        } else {
-          const lane = HIGHWAY_LANES.find(l => l.id === note.lane);
-          if (lane) {
-            ctx.fillStyle = note.missed ? '#475569' : lane.color;
-            ctx.strokeStyle = note.missed ? '#334155' : '#FFFFFF';
-            ctx.lineWidth = 1;
-            if (!note.missed) {
-              ctx.shadowColor = lane.color;
-              ctx.shadowBlur = 6;
-            }
-            ctx.fillRect(lane.x, noteY - 12, 32, 24);
-            ctx.strokeRect(lane.x, noteY - 12, 32, 24);
-            ctx.shadowBlur = 0;
-
-            ctx.font = 'bold 13px monospace';
-            ctx.fillStyle = note.missed ? '#94A3B8' : '#000000';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(lane.symbol, lane.x + 16, noteY);
-            ctx.textBaseline = 'alphabetic';
-          }
         }
       }
     }

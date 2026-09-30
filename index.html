@@ -191,16 +191,20 @@
             <span class="touch-label">DER</span>
           </button>
         </div>
-        <div class="touch-drop-wrapper">
-          <button class="touch-btn touch-drop" data-key="HIT" aria-label="Beat Drop / Solo de Guitarra">
-            <span class="touch-drop-icon">⚡ BEAT DROP</span>
-            <span class="touch-drop-sub">SOLO DE RIFLE</span>
+        <div class="touch-special-wrapper">
+          <button class="touch-btn touch-special" id="btn-special-move" data-key="SPECIAL" aria-label="Movimiento Especial / Sobrecarga de Flow">
+            <span class="touch-special-icon">⚡</span>
+            <div class="touch-special-text">
+              <span class="touch-special-title" id="special-btn-title">DESCARGA SÓNICA &bull; [ 20% ]</span>
+              <span class="touch-special-sub" id="special-btn-sub">LLENA LA BARRA DE FLOW PARA DESATAR</span>
+            </div>
+            <div class="touch-special-progress" id="special-btn-progress"></div>
           </button>
         </div>
       </div>
 
       <div id="controls-hint">
-        [PC]: <span>FLECHAS / WASD</span> = PASOS &bull; <span>ESPACIO</span> = BEAT DROP &bull; [MÓVIL]: CONTROLES TÁCTILES EN PANTALLA
+        [PC]: <span>FLECHAS / WASD</span> = PASOS &bull; <span>ESPACIO / ENTER</span> = MOVIMIENTO ESPECIAL (AL 100% FLOW) &bull; [MÓVIL]: PAD TÁCTIL
       </div>
     </section>
 
