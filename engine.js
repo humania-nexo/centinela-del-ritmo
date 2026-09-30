@@ -93,7 +93,7 @@ class GameEngine {
     this._loadAssets();
 
     // Métricas del juego y barra de Flow (Sobrecarga Especial)
-    this.flowMeter = 20; // 0 a 100 (al llegar a 100 habilita el Movimiento Especial)
+    this.flowMeter = 0; // Inicia en 0% (se carga con pasos bien ejecutados)
     this.specialEffectTimer = 0; // Duración de la alteración cromática y descarga de poder
     this.specialShockwaves = [];
     this.combo = 0;
@@ -408,7 +408,7 @@ class GameEngine {
       this.totalBarsInPhase = 16;
       this.orionHP = 100;
       this.bossHP = 100;
-      this.flowMeter = 20;
+      this.flowMeter = 0;
       this.score = 0;
       this.combo = 0;
       this.maxCombo = 0;
@@ -976,8 +976,6 @@ class GameEngine {
     }
 
     // Diálogos Narrativos Dinámicos (Monitor Exterior de Transmisión)
-    const speakerBadge = document.getElementById('hud-speaker-badge');
-    const dialogueContent = document.getElementById('hud-dialogue-content');
     if (speakerBadge && dialogueContent) {
       if (this.dialogueTimer > 0) {
         speakerBadge.textContent = `${this.dialogueSpeaker} // TRANSMISIÓN`;
