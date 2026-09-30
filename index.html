@@ -231,7 +231,7 @@
 
       <div class="btn-action-container" style="flex-wrap: wrap; gap: 14px;">
         <button class="terminal-btn" id="btn-restart-game">[ VOLVER A JUGAR ]</button>
-        <a href="https://www.youtube.com/watch?v=0LSYuZRSGcY&list=RD0LSYuZRSGcY&start_radio=1" target="_blank" rel="noopener noreferrer" class="terminal-btn pink-btn" id="btn-bsb-tribute" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
+        <a href="https://www.youtube.com/watch?v=0LSYuZRSGcY&list=RD0LSYuZRSGcY&start_radio=1" target="_self" class="terminal-btn pink-btn" id="btn-bsb-tribute" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
           [ VER HOMENAJE: BACKSTREET BOYS (VIDEO ORIGINAL) ]
         </a>
       </div>
@@ -251,10 +251,14 @@
     const btnToBriefing = document.getElementById('btn-to-briefing');
     const btnStartGame = document.getElementById('btn-start-game');
     const btnRestartGame = document.getElementById('btn-restart-game');
+    const btnBsbTribute = document.getElementById('btn-bsb-tribute');
 
     function showStep(stepElement) {
       document.querySelectorAll('.screen-view').forEach(s => s.classList.remove('active'));
       stepElement.classList.add('active');
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
     }
 
     btnToBriefing.addEventListener('click', () => {
@@ -269,11 +273,25 @@
     });
 
     btnRestartGame.addEventListener('click', () => {
+      if (window.audioSystem) {
+        window.audioSystem.stopMusic();
+      }
       showStep(stepIntro);
     });
 
+    if (btnBsbTribute) {
+      btnBsbTribute.addEventListener('click', () => {
+        if (window.audioSystem) {
+          window.audioSystem.stopMusic();
+        }
+      });
+    }
+
     // Escuchar evento de victoria del motor
     window.addEventListener('game-victory', () => {
+      if (window.audioSystem) {
+        window.audioSystem.stopMusic();
+      }
       showStep(stepVictory);
     });
   </script>

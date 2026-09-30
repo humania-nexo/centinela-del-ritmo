@@ -348,6 +348,18 @@ class GameEngine {
 
     this.canvas.addEventListener('touchstart', (e) => handleTouch(e, true), { passive: false });
     this.canvas.addEventListener('touchend', (e) => handleTouch(e, false), { passive: false });
+
+    // Botón de Continuar al Epílogo Canónico (Garantizar respuesta táctil inmediata)
+    const vicBtn = document.getElementById('vic-btn-continue');
+    if (vicBtn) {
+      const handleVicContinue = (e) => {
+        if (e && e.cancelable) e.preventDefault();
+        this.audio.stopMusic();
+        window.dispatchEvent(new CustomEvent('game-victory'));
+      };
+      vicBtn.addEventListener('click', handleVicContinue);
+      vicBtn.addEventListener('pointerdown', handleVicContinue);
+    }
   }
 
   // Inicio de Cuenta Regresiva 3, 2, 1, ¡FLOW!
@@ -1025,7 +1037,6 @@ class GameEngine {
           const vicScore = document.getElementById('vic-score-val');
           const vicCombo = document.getElementById('vic-combo-val');
           const vicRank = document.getElementById('vic-rank-val');
-          const vicBtn = document.getElementById('vic-btn-continue');
 
           if (vicScore) vicScore.textContent = `SCORE: ${this.score} PTS`;
           if (vicCombo) vicCombo.textContent = `MAX COMBO: x${this.maxCombo}`;
@@ -1034,11 +1045,6 @@ class GameEngine {
             const isRankA = this.score >= 8000;
             vicRank.textContent = isRankS ? "RANGO S: ¡FLOW CARÍSIMO!" : (isRankA ? "RANGO A: ¡BUEN RITMO!" : "RANGO B: CALIBRADO");
             vicRank.className = isRankS ? "rank-s" : (isRankA ? "highlight-cyan" : "highlight-gold");
-          }
-          if (vicBtn) {
-            vicBtn.onclick = () => {
-              window.dispatchEvent(new CustomEvent('game-victory'));
-            };
           }
         }
       } else {
@@ -1064,6 +1070,9 @@ class GameEngine {
     this.storyFlags['vic_2'] = false;
     this.storyFlags['vic_3'] = false;
     this.storyFlags['vic_4'] = false;
+
+    // Detener la música de fondo del juego y tocar fanfarria de victoria
+    this.audio.stopMusic();
 
     // Generar confeti festivo inicial
     for (let i = 0; i < 45; i++) {
