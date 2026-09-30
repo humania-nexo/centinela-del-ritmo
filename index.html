@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>EL CENTINELA DEL RITMO — Universo Proiectio (Capítulo 22)</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20260929_02">
 </head>
 <body>
 
@@ -239,8 +239,8 @@
 
   </main>
 
-  <script src="audio.js"></script>
-  <script src="engine.js"></script>
+  <script src="audio.js?v=20260929_02"></script>
+  <script src="engine.js?v=20260929_02"></script>
   <script>
     // Conexión de Pantallas de Terminal con el Motor
     const stepIntro = document.getElementById('step-intro');
@@ -252,6 +252,7 @@
     const btnStartGame = document.getElementById('btn-start-game');
     const btnRestartGame = document.getElementById('btn-restart-game');
     const btnBsbTribute = document.getElementById('btn-bsb-tribute');
+    const vicBtnContinue = document.getElementById('vic-btn-continue');
 
     function showStep(stepElement) {
       document.querySelectorAll('.screen-view').forEach(s => s.classList.remove('active'));
@@ -285,6 +286,19 @@
           window.audioSystem.stopMusic();
         }
       });
+    }
+
+    // Listener directo para botón de victoria
+    if (vicBtnContinue) {
+      const handleDirectVictory = (e) => {
+        if (e && e.cancelable) e.preventDefault();
+        if (window.audioSystem) {
+          window.audioSystem.stopMusic();
+        }
+        showStep(stepVictory);
+      };
+      vicBtnContinue.addEventListener('click', handleDirectVictory);
+      vicBtnContinue.addEventListener('touchend', handleDirectVictory);
     }
 
     // Escuchar evento de victoria del motor

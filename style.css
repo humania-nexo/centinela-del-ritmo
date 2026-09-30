@@ -662,21 +662,26 @@ canvas {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 1px;
-  padding: 8px 20px;
-  background: rgba(0, 229, 255, 0.15);
+  padding: 10px 20px;
+  background: rgba(0, 229, 255, 0.25);
   border: 1.5px solid var(--neon-cyan);
   color: #fff;
   border-radius: 4px;
   cursor: pointer;
   pointer-events: auto;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: all 0.2s ease;
-  box-shadow: 0 0 12px rgba(0, 229, 255, 0.25);
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.4);
+  position: relative;
+  z-index: 105;
+  user-select: none;
 }
 
-.vic-btn:hover {
+.vic-btn:hover, .vic-btn:active {
   background: var(--neon-cyan);
   color: #000;
-  box-shadow: 0 0 20px rgba(0, 229, 255, 0.7);
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.8);
   transform: scale(1.02);
 }
 
@@ -1009,7 +1014,7 @@ canvas {
   .screen-view {
     padding: 14px 12px;
     flex: 1;
-    display: none;
+    display: none !important;
     flex-direction: column;
     justify-content: flex-start;
     overflow-y: auto;
@@ -1018,14 +1023,14 @@ canvas {
   }
 
   .screen-view.active {
-    display: flex;
+    display: flex !important;
   }
 
-  #step-game.screen-view {
+  #step-game.screen-view.active {
     padding: 8px 10px;
     justify-content: flex-start;
     gap: 6px;
-    display: flex;
+    display: flex !important;
     flex-direction: column;
     min-height: calc(100dvh - 38px);
   }
