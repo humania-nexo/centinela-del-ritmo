@@ -21,9 +21,11 @@ const BAR_DUR = BEAT_DUR * 4; // ~2.0689 seg
 // Fases del Juego
 const GAME_PHASES = {
   TITLE: 'TITLE',
+  COUNTDOWN_TUTORIAL: 'COUNTDOWN_TUTORIAL',
   PHASE_1_TUTORIAL: 'PHASE_1_TUTORIAL',
   PHASE_1_FAILED: 'PHASE_1_FAILED',
   PHASE_1_RECORDING_REPLAY: 'PHASE_1_RECORDING_REPLAY',
+  COUNTDOWN_BOSS: 'COUNTDOWN_BOSS',
   PHASE_2_DUEL: 'PHASE_2_DUEL',
   VICTORY: 'VICTORY',
   GAME_OVER: 'GAME_OVER'
@@ -126,6 +128,11 @@ class GameEngine {
     // Screen shake por trauma
     this.trauma = 0;
 
+    // Cuenta Regresiva (3, 2, 1, ¡FLOW!)
+    this.countdownTimer = 0;
+    this.lastCountdownBeat = 0;
+    this.targetAfterCountdown = null;
+
     // Tiempos y Coreografía Cinemática de Victoria
     this.lastTime = performance.now();
     this.songStartTime = 0;
@@ -185,6 +192,16 @@ class GameEngine {
   }
 
   _bindEvents() {
+    // Sincronizar estado activo en botones DOM del Pad Táctil
+    const setDomBtnActive = (action, isActive) => {
+      const btn = document.querySelector(`.touch-btn[data-key="${action}"]`);
+      if (btn) {
+        if (isActive) btn.classList.add('active');
+        else btn.classList.remove('active');
+      }
+    };
+
+    // Teclado físico
     window.addEventListener('keydown', (e) => {
       if (e.repeat) return;
 
@@ -197,7 +214,6 @@ class GameEngine {
         return;
       }
       if (this.phase === GAME_PHASES.VICTORY) {
-        // Permitir continuar al epílogo únicamente tras haber presenciado la coreografía y destrucción (mínimo 5s)
         if (this.victoryTimer >= 5.0) {
           window.dispatchEvent(new CustomEvent('game-victory'));
         }
@@ -219,6 +235,7 @@ class GameEngine {
         this.handleAction(action);
         const b = this.virtualButtons.find(btn => btn.id === action);
         if (b) b.active = true;
+        setDomBtnActive(action, true);
       }
     });
 
@@ -233,12 +250,63 @@ class GameEngine {
       if (action) {
         const b = this.virtualButtons.find(btn => btn.id === action);
         if (b) b.active = false;
+        setDomBtnActive(action, false);
       }
     });
 
-    // Soporte táctil móvil
+    // Enlace de Botones Táctiles del Pad Móvil (Touch / Pointer con Cero Latencia)
+    document.querySelectorAll('.touch-btn').forEach(btn => {
+      const key = btn.getAttribute('data-key');
+      
+      const triggerAction = (e) => {
+        if (e.cancelable) e.preventDefault();
+        this.audio.ensureContext();
+        btn.classList.add('active');
+
+        if (this.phase === GAME_PHASES.TITLE || this.phase === GAME_PHASES.PHASE_1_FAILED) {
+          this.startPhase1Tutorial();
+          return;
+        }
+        if (this.phase === GAME_PHASES.PHASE_1_RECORDING_REPLAY) {
+          this.startPhase2Boss();
+          return;
+        }
+        if (this.phase === GAME_PHASES.VICTORY) {
+          if (this.victoryTimer >= 5.0) {
+            window.dispatchEvent(new CustomEvent('game-victory'));
+          }
+          return;
+        }
+        if (this.phase === GAME_PHASES.GAME_OVER) {
+          this.phase = GAME_PHASES.TITLE;
+          return;
+        }
+
+        if (key) {
+          this.handleAction(key);
+          const b = this.virtualButtons.find(vb => vb.id === key);
+          if (b) b.active = true;
+        }
+      };
+
+      const releaseAction = (e) => {
+        if (e.cancelable) e.preventDefault();
+        btn.classList.remove('active');
+        if (key) {
+          const b = this.virtualButtons.find(vb => vb.id === key);
+          if (b) b.active = false;
+        }
+      };
+
+      btn.addEventListener('pointerdown', triggerAction, { passive: false });
+      btn.addEventListener('pointerup', releaseAction, { passive: false });
+      btn.addEventListener('pointercancel', releaseAction, { passive: false });
+      btn.addEventListener('pointerleave', releaseAction, { passive: false });
+    });
+
+    // Toques en el propio Canvas (Fallback complementario)
     const handleTouch = (e, isDown) => {
-      e.preventDefault();
+      if (e.cancelable) e.preventDefault();
       if (this.phase === GAME_PHASES.TITLE || this.phase === GAME_PHASES.PHASE_1_FAILED) {
         this.startPhase1Tutorial();
         return;
@@ -270,6 +338,7 @@ class GameEngine {
           if (touchX >= btn.x && touchX <= btn.x + btn.w &&
               touchY >= btn.y && touchY <= btn.y + btn.h) {
             btn.active = isDown;
+            setDomBtnActive(btn.id, isDown);
             if (isDown) this.handleAction(btn.id);
           }
         }
@@ -280,7 +349,53 @@ class GameEngine {
     this.canvas.addEventListener('touchend', (e) => handleTouch(e, false), { passive: false });
   }
 
+  // Inicio de Cuenta Regresiva 3, 2, 1, ¡FLOW!
+  startCountdown(targetPhase) {
+    this.targetAfterCountdown = targetPhase;
+    this.phase = (targetPhase === GAME_PHASES.PHASE_1_TUTORIAL) ? GAME_PHASES.COUNTDOWN_TUTORIAL : GAME_PHASES.COUNTDOWN_BOSS;
+    this.countdownTimer = 3.6; // 3.6s: 3.6->2.7 (3), 2.7->1.8 (2), 1.8->0.9 (1), 0.9->0.0 (¡FLOW!)
+    this.lastCountdownBeat = 4;
+    this.audio.ensureContext();
+    this.audio.stopMusic();
+
+    const modal = document.getElementById('hud-phase-modal');
+    if (modal) modal.style.display = 'none';
+    const vicCard = document.getElementById('hud-victory-card');
+    if (vicCard) vicCard.style.display = 'none';
+    const popupCont = document.getElementById('hud-popup-container');
+    if (popupCont) popupCont.innerHTML = '';
+    
+    const countdownOverlay = document.getElementById('hud-countdown-overlay');
+    if (countdownOverlay) countdownOverlay.style.display = 'flex';
+
+    this.updateCountdownDisplay('3', '¡PREPÁRATE!');
+    if (this.audio.playCountdownBeat) this.audio.playCountdownBeat(1);
+  }
+
+  updateCountdownDisplay(text, subtitle) {
+    const numEl = document.getElementById('countdown-number');
+    const subEl = document.getElementById('countdown-sub');
+    if (numEl) {
+      numEl.textContent = text;
+      const box = numEl.closest('.countdown-box');
+      if (box) {
+        box.style.animation = 'none';
+        void box.offsetWidth;
+        box.style.animation = 'countdown-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+      }
+    }
+    if (subEl && subtitle) subEl.textContent = subtitle;
+  }
+
   startPhase1Tutorial() {
+    this.startCountdown(GAME_PHASES.PHASE_1_TUTORIAL);
+  }
+
+  startPhase2Boss() {
+    this.startCountdown(GAME_PHASES.PHASE_2_DUEL);
+  }
+
+  actuallyStartTutorial() {
     this.phase = GAME_PHASES.PHASE_1_TUTORIAL;
     this.audio.mode = 'TUTORIAL';
     this.audio.stopMusic();
@@ -299,17 +414,13 @@ class GameEngine {
     this.bossDestroyed = false;
     this.generateTutorialNotesStream(16);
     this.mitePose = MITE_EXT_FRAMES.HOLOGRAM_RECORD;
-    this.setDialogue('MITE', '¡Cámara "● REC" activada! ¡Muévete al compás de las flechas!');
+    this.setDialogue('MITE', '¡Cámara "● REC" activada! ¡Muévete al compás de las flechas!', 3.0);
 
-    const modal = document.getElementById('hud-phase-modal');
-    if (modal) modal.style.display = 'none';
-    const vicCard = document.getElementById('hud-victory-card');
-    if (vicCard) vicCard.style.display = 'none';
-    const popupCont = document.getElementById('hud-popup-container');
-    if (popupCont) popupCont.innerHTML = '';
+    const countdownOverlay = document.getElementById('hud-countdown-overlay');
+    if (countdownOverlay) countdownOverlay.style.display = 'none';
   }
 
-  startPhase2Boss() {
+  actuallyStartBoss() {
     this.phase = GAME_PHASES.PHASE_2_DUEL;
     this.audio.mode = 'BOSS_DUEL';
     this.audio.stopMusic();
@@ -325,50 +436,11 @@ class GameEngine {
     this.bossDestroyed = false;
     this.generateBossNotesStream(32);
     this.mitePose = MITE_EXT_FRAMES.COMBO_CHEER;
-    this.setDialogue('CENTINELA', 'ANOMALÍA ORGÁNICA DETECTADA. INICIANDO BARRIDO LÁSER.');
+    this.setDialogue('CENTINELA', 'ANOMALÍA DETECTADA. BARRIDO LÁSER EN CURSO.', 3.0);
 
-    const modal = document.getElementById('hud-phase-modal');
-    if (modal) modal.style.display = 'none';
-    const vicCard = document.getElementById('hud-victory-card');
-    if (vicCard) vicCard.style.display = 'none';
-    const popupCont = document.getElementById('hud-popup-container');
-    if (popupCont) popupCont.innerHTML = '';
-  }
-
-  // Generar notas para el Tutorial Progresivo (16 Compases)
-  generateTutorialNotesStream(numBars) {
-    this.notesStream = [];
-    const arrowKeys = ['LEFT', 'DOWN', 'UP', 'RIGHT'];
-
-    for (let bar = 0; bar < numBars; bar++) {
-      const barStartTime = bar * BAR_DUR;
-
-      if (bar < 4) {
-        // Compases 0-3: Introducción básica (1 flecha en tiempos 1 y 3)
-        const laneA = arrowKeys[bar % 4];
-        const laneB = arrowKeys[(bar + 2) % 4];
-        this.notesStream.push({ lane: laneA, targetTime: barStartTime + (0 * BEAT_DUR) + 0.05, hit: false, missed: false, isBeatDrop: false });
-        this.notesStream.push({ lane: laneB, targetTime: barStartTime + (2 * BEAT_DUR) + 0.05, hit: false, missed: false, isBeatDrop: false });
-      } else if (bar < 8) {
-        // Compases 4-7: Dos pasos + Beat Drop en tiempo 4
-        const laneA = arrowKeys[Math.floor(Math.random() * 4)];
-        const laneB = arrowKeys[Math.floor(Math.random() * 4)];
-        this.notesStream.push({ lane: laneA, targetTime: barStartTime + (0 * BEAT_DUR) + 0.05, hit: false, missed: false, isBeatDrop: false });
-        this.notesStream.push({ lane: laneB, targetTime: barStartTime + (2 * BEAT_DUR) + 0.05, hit: false, missed: false, isBeatDrop: false });
-        this.notesStream.push({ lane: 'HIT', targetTime: barStartTime + (3 * BEAT_DUR) + 0.05, hit: false, missed: false, isBeatDrop: true });
-      } else {
-        // Compases 8-15: Grabación completa de Mite (3 notas + Beat Drop)
-        for (let beat = 0; beat < 3; beat++) {
-          const laneId = arrowKeys[Math.floor(Math.random() * 4)];
-          this.notesStream.push({ lane: laneId, targetTime: barStartTime + (beat * BEAT_DUR) + 0.05, hit: false, missed: false, isBeatDrop: false });
-        }
-        this.notesStream.push({ lane: 'HIT', targetTime: barStartTime + (3 * BEAT_DUR) + 0.05, hit: false, missed: false, isBeatDrop: true });
-      }
-    }
-  }
-
-  // Generar notas para la Batalla de 32 Compases contra el Centinela
-  generateBossNotesStream(numBars) {
+    const countdownOverlay = document.getElementById('hud-countdown-overlay');
+    if (countdownOverlay) countdownOverlay.style.display = 'none';
+  }  generateBossNotesStream(numBars) {
     this.notesStream = [];
     const arrowKeys = ['LEFT', 'DOWN', 'UP', 'RIGHT'];
 
@@ -562,6 +634,47 @@ class GameEngine {
   loop(currentTime) {
     const dt = Math.min((currentTime - this.lastTime) / 1000, 0.1);
     this.lastTime = currentTime;
+
+    // Control de Cuenta Regresiva (3, 2, 1, ¡FLOW!)
+    if (this.phase === GAME_PHASES.COUNTDOWN_TUTORIAL || this.phase === GAME_PHASES.COUNTDOWN_BOSS) {
+      this.countdownTimer -= dt;
+      if (this.countdownTimer > 2.7) {
+        if (this.lastCountdownBeat > 3) {
+          this.lastCountdownBeat = 3;
+          this.updateCountdownDisplay('3', '¡PREPÁRATE!');
+          if (this.audio.playCountdownBeat) this.audio.playCountdownBeat(1);
+        }
+      } else if (this.countdownTimer > 1.8) {
+        if (this.lastCountdownBeat > 2) {
+          this.lastCountdownBeat = 2;
+          this.updateCountdownDisplay('2', '¡AL RITMO!');
+          if (this.audio.playCountdownBeat) this.audio.playCountdownBeat(2);
+        }
+      } else if (this.countdownTimer > 0.9) {
+        if (this.lastCountdownBeat > 1) {
+          this.lastCountdownBeat = 1;
+          this.updateCountdownDisplay('1', '¡ATENTO!');
+          if (this.audio.playCountdownBeat) this.audio.playCountdownBeat(3);
+        }
+      } else if (this.countdownTimer > 0.0) {
+        if (this.lastCountdownBeat > 0) {
+          this.lastCountdownBeat = 0;
+          this.updateCountdownDisplay('¡FLOW!', '¡A BAILAR!');
+          if (this.audio.playCountdownBeat) this.audio.playCountdownBeat(4);
+        }
+      } else {
+        // Fin de cuenta regresiva -> Lanzar juego
+        if (this.targetAfterCountdown === GAME_PHASES.PHASE_1_TUTORIAL) {
+          this.actuallyStartTutorial();
+        } else {
+          this.actuallyStartBoss();
+        }
+      }
+
+      this.render(0, 0);
+      requestAnimationFrame((t) => this.loop(t));
+      return;
+    }
 
     const songTime = this.audio.ctx ? (this.audio.ctx.currentTime - this.songStartTime) : 0;
     const beatPhase = (songTime / BEAT_DUR) % 1;

@@ -445,29 +445,34 @@ canvas {
   color: #ff3366;
 }
 
-/* Banner de Diálogo Dinámico de Misión */
+/* Banner de Diálogo Dinámico de Misión (Compacto Superior tipo Cápsula) */
 #hud-dialogue-banner {
-  margin: 0 auto;
-  width: 95%;
-  max-width: 680px;
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: auto;
+  max-width: 90%;
   background: rgba(4, 8, 18, 0.92);
   backdrop-filter: blur(8px);
   border: 1.5px solid var(--neon-cyan);
-  border-radius: 6px;
-  padding: 8px 14px;
+  border-radius: 20px;
+  padding: 4px 12px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   box-shadow: 0 0 16px rgba(0, 229, 255, 0.25);
   animation: hud-fade-in 0.25s ease-out;
+  pointer-events: none;
+  z-index: 40;
 }
 
 #hud-speaker-badge {
   font-family: var(--font-heading);
-  font-size: 10.5px;
+  font-size: 9.5px;
   font-weight: 800;
   letter-spacing: 1px;
-  padding: 3px 8px;
+  padding: 2px 6px;
   border-radius: 3px;
   flex-shrink: 0;
 }
@@ -491,9 +496,79 @@ canvas {
 }
 
 #hud-dialogue-content {
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: 11px;
+  line-height: 1.3;
   color: #f8fafc;
+}
+
+/* Overlay de Cuenta Regresiva 3, 2, 1, ¡FLOW! */
+#hud-countdown-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 80;
+}
+
+.countdown-box {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: rgba(4, 8, 20, 0.94);
+  border: 3px solid var(--neon-gold);
+  box-shadow: 0 0 35px var(--neon-gold), inset 0 0 20px rgba(255, 204, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: countdown-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#countdown-number {
+  font-family: var(--font-heading);
+  font-size: 46px;
+  font-weight: 900;
+  color: var(--neon-gold);
+  text-shadow: 0 0 16px var(--neon-gold);
+}
+
+.countdown-pulse-ring {
+  position: absolute;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  border: 2px solid var(--neon-cyan);
+  animation: ring-pulse 0.9s infinite ease-out;
+  pointer-events: none;
+}
+
+@keyframes ring-pulse {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+@keyframes countdown-pop {
+  0% { transform: scale(0.3); opacity: 0; }
+  70% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+#countdown-sub {
+  margin-top: 10px;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #fff;
+  background: rgba(6, 12, 24, 0.88);
+  padding: 4px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--neon-cyan);
+  text-shadow: 0 0 10px var(--neon-cyan);
 }
 
 /* Tarjeta Flotante de Victoria en Alta Resolución */
@@ -620,6 +695,7 @@ canvas {
   max-width: 420px;
   width: 90%;
   pointer-events: auto;
+  z-index: 90;
 }
 
 .modal-title {
@@ -641,4 +717,297 @@ canvas {
 @keyframes hud-fade-in {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* ========================================================================== */
+/* PAD TÁCTIL ERGONÓMICO DE ALTO IMPACTO (MÓVIL / PANTALLAS TÁCTILES)         */
+/* ========================================================================== */
+#mobile-touch-pad {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.touch-directions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+
+.touch-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 58px;
+  border-radius: 8px;
+  background: rgba(10, 18, 36, 0.92);
+  border: 1.5px solid;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  outline: none;
+  transition: transform 0.05s ease, background-color 0.05s ease, box-shadow 0.05s ease;
+}
+
+.touch-btn:active, .touch-btn.active {
+  transform: scale(0.92);
+}
+
+.touch-left {
+  border-color: #00E5FF;
+  color: #00E5FF;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
+}
+.touch-left:active, .touch-left.active {
+  background: #00E5FF;
+  color: #000;
+  box-shadow: 0 0 25px #00E5FF;
+}
+
+.touch-down {
+  border-color: #FFE066;
+  color: #FFE066;
+  box-shadow: 0 0 10px rgba(255, 224, 102, 0.2);
+}
+.touch-down:active, .touch-down.active {
+  background: #FFE066;
+  color: #000;
+  box-shadow: 0 0 25px #FFE066;
+}
+
+.touch-up {
+  border-color: #00FFAA;
+  color: #00FFAA;
+  box-shadow: 0 0 10px rgba(0, 255, 170, 0.2);
+}
+.touch-up:active, .touch-up.active {
+  background: #00FFAA;
+  color: #000;
+  box-shadow: 0 0 25px #00FFAA;
+}
+
+.touch-right {
+  border-color: #FF0055;
+  color: #FF0055;
+  box-shadow: 0 0 10px rgba(255, 0, 85, 0.2);
+}
+.touch-right:active, .touch-right.active {
+  background: #FF0055;
+  color: #FFF;
+  box-shadow: 0 0 25px #FF0055;
+}
+
+.touch-icon {
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.touch-label {
+  font-family: var(--font-heading);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-top: 3px;
+}
+
+.touch-drop-wrapper {
+  width: 100%;
+}
+
+.touch-btn.touch-drop {
+  width: 100%;
+  height: 48px;
+  background: linear-gradient(90deg, rgba(255, 0, 85, 0.25), rgba(255, 204, 0, 0.25));
+  border: 1.5px solid #FF0055;
+  color: #FFF;
+  box-shadow: 0 0 15px rgba(255, 0, 85, 0.35);
+  flex-direction: row;
+  gap: 12px;
+}
+
+.touch-btn.touch-drop:active, .touch-btn.touch-drop.active {
+  background: #FF0055;
+  color: #FFF;
+  box-shadow: 0 0 30px #FF0055;
+  transform: scale(0.95);
+}
+
+.touch-drop-icon {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.touch-drop-sub {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.5px;
+}
+
+/* ========================================================================== */
+/* RESPONSIVIDAD Y OPTIMIZACIÓN MÓVIL (PANTALLA COMPLETA & ALTA ERGONOMÍA)   */
+/* ========================================================================== */
+@media (max-width: 768px) {
+  body {
+    padding: 0;
+    margin: 0;
+    min-height: 100dvh;
+    align-items: stretch;
+  }
+
+  .terminal-wrapper {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .terminal-header {
+    padding: 8px 12px;
+    font-size: 10px;
+  }
+
+  .header-left {
+    gap: 6px;
+  }
+
+  .header-title {
+    font-size: 10px;
+  }
+
+  .header-badge {
+    font-size: 8.5px;
+    padding: 1px 5px;
+  }
+
+  .screen-view {
+    padding: 14px 12px;
+    flex: 1;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .screen-view.active {
+    display: flex;
+  }
+
+  #step-game.screen-view {
+    padding: 6px;
+    justify-content: flex-start;
+    gap: 4px;
+  }
+
+  .glitch-title {
+    font-size: 18px;
+  }
+
+  .story-box {
+    padding: 12px 14px;
+    font-size: 12px;
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
+  .dialog-card {
+    flex-direction: column;
+    padding: 12px;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .dialog-bubble {
+    text-align: left;
+  }
+
+  .terminal-btn {
+    width: 100%;
+    padding: 13px 16px;
+    font-size: 11px;
+    text-align: center;
+  }
+
+  #game-viewport {
+    width: 100%;
+    max-height: 48vh;
+    aspect-ratio: 16 / 9;
+  }
+
+  #controls-hint {
+    font-size: 9px;
+    margin-top: 4px;
+  }
+
+  .touch-btn {
+    height: 52px;
+  }
+
+  .touch-icon {
+    font-size: 18px;
+  }
+
+  .touch-label {
+    font-size: 8.5px;
+  }
+
+  .touch-btn.touch-drop {
+    height: 44px;
+  }
+
+  #hud-top-bar {
+    gap: 4px;
+  }
+
+  .hud-stat-box {
+    padding: 2px 6px;
+    font-size: 9px;
+    gap: 4px;
+  }
+
+  .hud-stat-label {
+    font-size: 8px;
+  }
+
+  .hud-meter-track {
+    width: 42px;
+    height: 5px;
+  }
+
+  .score-box {
+    font-size: 8.5px;
+  }
+
+  #hud-popup-container {
+    top: 25%;
+    left: 12%;
+  }
+
+  .hud-popup-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  .modal-title {
+    font-size: 12px;
+  }
+
+  .modal-desc {
+    font-size: 10.5px;
+  }
+
+  #hud-phase-modal {
+    padding: 16px 18px;
+  }
 }

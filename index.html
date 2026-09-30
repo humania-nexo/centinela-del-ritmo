@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <link rel="icon" type="image/png" href="favicon.png">
@@ -124,10 +124,19 @@
           <!-- Contenedor de Popups Flotantes de Precisión -->
           <div id="hud-popup-container"></div>
 
-          <!-- Banner Dinámico de Diálogos Narrativos (Transmedia) -->
+          <!-- Banner Dinámico de Diálogos Narrativos (Transmedia - Compacto Superior) -->
           <div id="hud-dialogue-banner" style="display: none;">
             <span id="hud-speaker-badge" class="speaker-mite">MITE:</span>
             <span id="hud-dialogue-content">¡Cámara activada! ¡Muévete al ritmo!</span>
+          </div>
+
+          <!-- Overlay de Cuenta Regresiva 3, 2, 1, ¡FLOW! -->
+          <div id="hud-countdown-overlay" style="display: none;">
+            <div class="countdown-pulse-ring"></div>
+            <div class="countdown-box">
+              <span id="countdown-number">3</span>
+            </div>
+            <div id="countdown-sub">¡PREPÁRATE!</div>
           </div>
 
           <!-- Tarjeta Flotante de Victoria y Score Final -->
@@ -153,8 +162,36 @@
         </div>
       </div>
 
+      <!-- PAD TÁCTIL ERGONÓMICO DE ALTO IMPACTO (MÓVIL / PANTALLAS TÁCTILES) -->
+      <div id="mobile-touch-pad">
+        <div class="touch-directions">
+          <button class="touch-btn touch-left" data-key="LEFT" aria-label="Izquierda / Moonwalk">
+            <span class="touch-icon">◀</span>
+            <span class="touch-label">IZQ</span>
+          </button>
+          <button class="touch-btn touch-down" data-key="DOWN" aria-label="Abajo / Breakdance">
+            <span class="touch-icon">▼</span>
+            <span class="touch-label">ABAJO</span>
+          </button>
+          <button class="touch-btn touch-up" data-key="UP" aria-label="Arriba / Popping">
+            <span class="touch-icon">▲</span>
+            <span class="touch-label">ARRIBA</span>
+          </button>
+          <button class="touch-btn touch-right" data-key="RIGHT" aria-label="Derecha / Spin">
+            <span class="touch-icon">▶</span>
+            <span class="touch-label">DER</span>
+          </button>
+        </div>
+        <div class="touch-drop-wrapper">
+          <button class="touch-btn touch-drop" data-key="HIT" aria-label="Beat Drop / Solo de Guitarra">
+            <span class="touch-drop-icon">⚡ BEAT DROP</span>
+            <span class="touch-drop-sub">SOLO DE RIFLE</span>
+          </button>
+        </div>
+      </div>
+
       <div id="controls-hint">
-        [PC]: <span>FLECHAS / WASD</span> = PASOS &bull; <span>ESPACIO</span> = BEAT DROP &bull; [MÓVIL]: TOCA LOS RECEPTORES EN PANTALLA
+        [PC]: <span>FLECHAS / WASD</span> = PASOS &bull; <span>ESPACIO</span> = BEAT DROP &bull; [MÓVIL]: CONTROLES TÁCTILES EN PANTALLA
       </div>
     </section>
 
